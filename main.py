@@ -496,6 +496,55 @@ async def set_record(interaction: discord.Interaction, type: app_commands.Choice
     await record_message.edit(content=content)
     await interaction.response.send_message(f'{type.value} record set to {wins}W - {losses}L.', ephemeral=True)
 
+@tree.command(name='weeklies', description='Post the weekly scrim schedule')
+@app_commands.describe(
+    monday_team='Monday team', monday_time='Monday time',
+    tuesday_team='Tuesday team', tuesday_time='Tuesday time',
+    wednesday_team='Wednesday team', wednesday_time='Wednesday time',
+    thursday_team='Thursday team', thursday_time='Thursday time',
+    friday_team='Friday team', friday_time='Friday time',
+    saturday_team='Saturday team', saturday_time='Saturday time',
+    sunday_team='Sunday team', sunday_time='Sunday time'
+)
+async def weeklies(
+    interaction: discord.Interaction,
+    monday_team: str = 'N/A', monday_time: str = 'N/A',
+    tuesday_team: str = 'N/A', tuesday_time: str = 'N/A',
+    wednesday_team: str = 'N/A', wednesday_time: str = 'N/A',
+    thursday_team: str = 'N/A', thursday_time: str = 'N/A',
+    friday_team: str = 'N/A', friday_time: str = 'N/A',
+    saturday_team: str = 'N/A', saturday_time: str = 'N/A',
+    sunday_team: str = 'N/A', sunday_time: str = 'N/A'
+):
+    days = [
+        ('Monday', monday_team, monday_time),
+        ('Tuesday', tuesday_team, tuesday_time),
+        ('Wednesday', wednesday_team, wednesday_time),
+        ('Thursday', thursday_team, thursday_time),
+        ('Friday', friday_team, friday_time),
+        ('Saturday', saturday_team, saturday_time),
+        ('Sunday', sunday_team, sunday_time),
+    ]
+
+    embed = discord.Embed(
+        title='WICKED WEEKLY SCHEDULE',
+        color=0x9800FF,
+        timestamp=discord.utils.utcnow()
+    )
+
+    for day, team, time in days:
+        embed.add_field(
+            name=day,
+            value=f'Team - {team}\nTime - {time}',
+            inline=False
+        )
+
+    await interaction.response.send_message(
+        content='<@&1475257569231769699>',
+        embed=embed,
+        allowed_mentions=discord.AllowedMentions(roles=True)
+    )
+
 @bot.event
 async def on_ready():
     guild = discord.Object(id=1475257569231769690)
