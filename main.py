@@ -139,17 +139,19 @@ async def roster(
 
     await interaction.response.send_message(embed=embed)
 
-    def get_winner(score: str, opposing_team: str) -> str:
-        try:
-            parts = score.replace(' ', '').split('-')
-            if int(parts[0]) == 7:
-                return 'WICKED Win'
-            elif int(parts[1]) == 7:
-                return f'{opposing_team} Win'
-            else:
-                return 'Unknown'
-        except:
-            return ''
+def get_winner(score: str, opposing_team: str) -> str:
+    try:
+        parts = score.replace(' ', '').split('-')
+        if int(parts[0]) == 7:
+            return 'WICKED Win'
+        elif int(parts[1]) == 7:
+            return f'{opposing_team} Win'
+        else:
+            return 'Unknown'
+    except:
+        return ''
+
+@tree.command(name='scrim-result', description='Post scrim results')
 
 @tree.command(name='scrim-result', description='Post scrim results')
 @app_commands.describe(
