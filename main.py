@@ -195,6 +195,48 @@ async def scrim_result(
 
     await interaction.response.send_message(embed=embed)
 
+@tree.command(name='ping-available', description='Ping available players for a day')
+@app_commands.describe(day='Day of the week')
+@app_commands.choices(day=[
+    app_commands.Choice(name='Monday', value='Monday'),
+    app_commands.Choice(name='Tuesday', value='Tuesday'),
+    app_commands.Choice(name='Wednesday', value='Wednesday'),
+    app_commands.Choice(name='Thursday', value='Thursday'),
+    app_commands.Choice(name='Friday', value='Friday'),
+    app_commands.Choice(name='Saturday', value='Saturday'),
+    app_commands.Choice(name='Sunday', value='Sunday'),
+])
+async def ping_available(interaction: discord.Interaction, day: app_commands.Choice[str]):
+    await interaction.response.defer()
+
+    channel = interaction.client.get_channel(1477396682030452861)
+    if not channel:
+        await interaction.followup.send('Could not find availability channel.')
+        return
+
+    target_message = None
+    async for message in channel.history(limit=100):
+        if message.author == interaction.client.user and day.value in message.content:
+            target_message = message
+            break
+
+    if not target_message:
+        await interaction.followup.send(f'Could not find availability message for {day.value}.')
+        return
+
+    users = set()
+    for reaction in target_message.reactions:
+        if str(reaction.emoji) in ['7️⃣', '9️⃣']:
+            async for user in reaction.users():
+                if not user.bot:
+                    users.add(user.mention)
+
+    if not users:
+        await interaction.followup.send(f'No one is available on {day.value}.')
+        return
+
+    await interaction.followup.send(f'Available on **{day.value}**: {" ".join(users)}')
+
 @bot.event
 async def on_ready():
     guild = discord.Object(id=1475257569231769690)
