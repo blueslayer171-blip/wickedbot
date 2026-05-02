@@ -156,6 +156,15 @@ RECORD_CHANNEL_ID = 1500123119812087931
 
 MAPS = ['Factory', 'Skyscraper', 'Hideout', 'Ship', 'Arctic', 'Dam', 'Mall']
 
+def is_manager():
+    async def predicate(interaction: discord.Interaction):
+        role = discord.utils.get(interaction.user.roles, id=1475257569244221501)
+        if role is None:
+            await interaction.response.send_message('You do not have permission to use this command.', ephemeral=True)
+            return False
+        return True
+    return app_commands.check(predicate)
+
 async def update_record(client, scrim_won: bool, map_results: list):
     channel = client.get_channel(RECORD_CHANNEL_ID)
     if not channel:
@@ -382,6 +391,110 @@ async def mvp_vote(interaction: discord.Interaction):
 
     winner = players[winner_index]
     await interaction.channel.send(f'🏆 **{winner}** has won the vote for the MVP of the scrim! 🏆')
+
+@tree.command(name='clear-record', description='Clear the entire record')
+@is_manager()
+async def clear_record(interaction: discord.Interaction):
+    channel = interaction.client.get_channel(RECORD_CHANNEL_ID)
+    async for message in channel.history(limit=50):
+        if message.author == interaction.client.user and 'WICKED RECORD' in message.content:
+            await message.delete()
+            await interaction.response.send_message('Record has been cleared.', ephemeral=True)
+            return
+    await interaction.response.send_message('No record found.', ephemeral=True)
+
+
+@tree.command(name='undo-record', description='Undo the most recent scrim result')
+@is_manager()
+@app_commands.describe(result='Was the last scrim a win or loss?')
+@app_commands.choices(result=[
+    app_commands.Choice(name='Win', value='win'),
+    app_commands.Choice(name='Loss', value='loss')
+])
+async def undo_record(interaction: discord.Interaction, result: app_commands.Choice[str]):
+    channel = interaction.client.get_channel(RECORD_CHANNEL_ID)
+    record_message = None
+    async for message in channel.history(limit=50):
+        if message.author == interaction.client.user and 'WICKED RECORD' in message.content:
+            record_message = message
+            break
+
+    if not record_message:
+        await interaction.response.send_message('No record found.', ephemeral=True)
+        return
+
+    lines = record_message.content.split('\n')
+    overall_line = lines[1]
+    parts = overall_line.replace('**Overall:** ', '').split(' - ')
+    overall_wins = int(parts[0].replace('W', ''))
+    overall_losses = int(parts[1].replace('L', ''))
+
+    if result.value == 'win' and overall_wins > 0:
+        overall_wins -= 1
+    elif result.value == 'loss' and overall_losses > 0:
+        overall_losses -= 1
+
+    total = overall_wins + overall_losses
+    overall_wr = round((overall_wins / total) * 100) if total > 0 else 0
+
+    new_content = record_message.content
+    new_content = new_content.replace(overall_line, f'**Overall:** {overall_wins}W - {overall_losses}L')
+    new_content = new_content.replace(lines[2], f'**Win Rate:** {overall_wr}%')
+
+    await record_message.edit(content=new_content)
+    await interaction.response.send_message('Record has been updated.', ephemeral=True)
+
+
+@tree.command(name='set-record', description='Manually set the overall or map record')
+@is_manager()
+@app_commands.describe(
+    type='Overall or specific map',
+    wins='Number of wins',
+    losses='Number of losses'
+)
+@app_commands.choices(type=[
+    app_commands.Choice(name='Overall', value='Overall'),
+    app_commands.Choice(name='Factory', value='Factory'),
+    app_commands.Choice(name='Skyscraper', value='Skyscraper'),
+    app_commands.Choice(name='Hideout', value='Hideout'),
+    app_commands.Choice(name='Ship', value='Ship'),
+    app_commands.Choice(name='Arctic', value='Arctic'),
+    app_commands.Choice(name='Dam', value='Dam'),
+    app_commands.Choice(name='Mall', value='Mall'),
+])
+async def set_record(interaction: discord.Interaction, type: app_commands.Choice[str], wins: int, losses: int):
+    channel = interaction.client.get_channel(RECORD_CHANNEL_ID)
+    record_message = None
+    async for message in channel.history(limit=50):
+        if message.author == interaction.client.user and 'WICKED RECORD' in message.content:
+            record_message = message
+            break
+
+    if not record_message:
+        await interaction.response.send_message('No record found. Use /scrim-result first.', ephemeral=True)
+        return
+
+    content = record_message.content
+
+    if type.value == 'Overall':
+        lines = content.split('\n')
+        overall_line = lines[1]
+        win_rate_line = lines[2]
+        total = wins + losses
+        wr = round((wins / total) * 100) if total > 0 else 0
+        content = content.replace(overall_line, f'**Overall:** {wins}W - {losses}L')
+        content = content.replace(win_rate_line, f'**Win Rate:** {wr}%')
+    else:
+        lines = content.split('\n')
+        for line in lines:
+            if f'🗺️ {type.value}:' in line:
+                total = wins + losses
+                wr = round((wins / total) * 100) if total > 0 else 0
+                content = content.replace(line, f'🗺️ {type.value}: {wins}W / {losses}L ({wr}% Win Rate)')
+                break
+
+    await record_message.edit(content=content)
+    await interaction.response.send_message(f'{type.value} record set to {wins}W - {losses}L.', ephemeral=True)
 
 @bot.event
 async def on_ready():
