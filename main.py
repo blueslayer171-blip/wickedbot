@@ -85,6 +85,115 @@ async def availability(interaction: discord.Interaction):
         await msg.add_reaction('7️⃣')
         await msg.add_reaction('9️⃣')
 
+@tree.command(name='match-reminder', description='Send a scrim reminder')
+@app_commands.describe(time='Time of the scrim')
+async def match_reminder(interaction: discord.Interaction, time: str):
+    embed = discord.Embed(
+        title='SCRIM REMINDER',
+        description=f'Scrim at {time}',
+        color=0x9800FF,
+        timestamp=discord.utils.utcnow()
+    )
+
+    await interaction.response.send_message(
+        content='<@&1475257569231769699>',
+        embed=embed,
+        allowed_mentions=discord.AllowedMentions(roles=True)
+    )
+
+@tree.command(name='roster', description='Display the team roster')
+@app_commands.describe(
+    main1='Main player 1',
+    main2='Main player 2',
+    main3='Main player 3',
+    main4='Main player 4',
+    main5='Main player 5',
+    subs='Substitute players'
+)
+async def roster(
+    interaction: discord.Interaction,
+    main1: str = 'N/A',
+    main2: str = 'N/A',
+    main3: str = 'N/A',
+    main4: str = 'N/A',
+    main5: str = 'N/A',
+    subs: str = 'N/A'
+):
+    embed = discord.Embed(
+        title='WICKED ROSTER',
+        color=0x9800FF,
+        timestamp=discord.utils.utcnow()
+    )
+
+    embed.add_field(
+        name='Main Roster',
+        value=f'{main1}\n{main2}\n{main3}\n{main4}\n{main5}',
+        inline=False
+    )
+
+    embed.add_field(
+        name='Subs',
+        value=subs,
+        inline=False
+    )
+
+    await interaction.response.send_message(embed=embed)
+
+    def get_winner(score: str, opposing_team: str) -> str:
+    try:
+        parts = score.replace(' ', '').split('-')
+        if int(parts[0]) == 7:
+            return 'WICKED Win'
+        elif int(parts[1]) == 7:
+            return f'{opposing_team} Win'
+        else:
+            return 'Unknown'
+    except:
+        return ''
+
+@tree.command(name='scrim-result', description='Post scrim results')
+@app_commands.describe(
+    opposing_team='The opposing team name',
+    map1='Map 1 name',
+    map1_score='Map 1 score (e.g. 7-2)',
+    map2='Map 2 name',
+    map2_score='Map 2 score (e.g. 6-7)',
+    map3='Map 3 name',
+    map3_score='Map 3 score (e.g. 7-4)',
+    mvps='MVP players',
+    notes='Any additional notes'
+)
+async def scrim_result(
+    interaction: discord.Interaction,
+    opposing_team: str,
+    map1: str,
+    map1_score: str,
+    map2: str = None,
+    map2_score: str = None,
+    map3: str = None,
+    map3_score: str = None,
+    mvps: str = 'N/A',
+    notes: str = 'None'
+):
+    embed = discord.Embed(
+        title=f'Scrim vs {opposing_team}',
+        color=0x9800FF,
+        timestamp=discord.utils.utcnow()
+    )
+
+    maps_value = f'{map1} : {map1_score} - {get_winner(map1_score, opposing_team)}\n'
+
+    if map2 and map2_score:
+        maps_value += f'{map2} : {map2_score} - {get_winner(map2_score, opposing_team)}\n'
+
+    if map3 and map3_score:
+        maps_value += f'{map3} : {map3_score} - {get_winner(map3_score, opposing_team)}\n'
+
+    embed.add_field(name='\u200B', value=maps_value, inline=False)
+    embed.add_field(name='MVP', value=mvps, inline=False)
+    embed.add_field(name='Notes', value=notes, inline=False)
+
+    await interaction.response.send_message(embed=embed)
 
 @bot.event
 async def on_ready():
