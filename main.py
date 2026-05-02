@@ -145,7 +145,7 @@ async def roster(
             if int(parts[0]) == 7:
                 return 'WICKED Win'
             elif int(parts[1]) == 7:
-                eturn f'{opposing_team} Win'
+                return f'{opposing_team} Win'
             else:
                 return 'Unknown'
         except:
