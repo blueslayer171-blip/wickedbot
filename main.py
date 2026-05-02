@@ -539,11 +539,7 @@ async def weeklies(
             inline=False
         )
 
-    await interaction.response.send_message(
-        content='<@&1475257569231769699>',
-        embed=embed,
-        allowed_mentions=discord.AllowedMentions(roles=True)
-    )
+    await interaction.response.send_message(embed=embed)
 
 @bot.event
 async def on_ready():
