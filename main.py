@@ -152,8 +152,6 @@ def get_winner(score: str, opposing_team: str) -> str:
         return ''
 
 @tree.command(name='scrim-result', description='Post scrim results')
-
-@tree.command(name='scrim-result', description='Post scrim results')
 @app_commands.describe(
     opposing_team='The opposing team name',
     map1='Map 1 name',
