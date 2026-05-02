@@ -3,6 +3,7 @@ from discord import app_commands
 import os
 from dotenv import load_dotenv
 import webserver
+import asyncio
 
 load_dotenv()
 TOKEN = os.environ['DISCORD_BOT_TOKEN']
@@ -236,6 +237,53 @@ async def ping_available(interaction: discord.Interaction, day: app_commands.Cho
         return
 
     await interaction.followup.send(f'Available on **{day.value}**: {" ".join(users)}')
+
+@tree.command(name='mvp-vote', description='Start an MVP vote')
+async def mvp_vote(interaction: discord.Interaction):
+    players = [
+        'Dopiest',
+        'Blue Slayer',
+        'Fluthagr8',
+        'trick.nwm',
+        'gamma2-',
+        'Deftones',
+        'IceBeast'
+    ]
+
+    number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣']
+
+    description = 'Vote for the MVP of the scrim!\n\n'
+    for i, player in enumerate(players):
+        description += f'{number_emojis[i]} - {player}\n'
+
+    embed = discord.Embed(
+        title='MVP Vote',
+        description=description,
+        color=0x9800FF,
+        timestamp=discord.utils.utcnow()
+    )
+
+    await interaction.response.send_message(embed=embed)
+    message = await interaction.original_response()
+
+    for i in range(len(players)):
+        await message.add_reaction(number_emojis[i])
+
+    await asyncio.sleep(1800)
+
+    message = await interaction.channel.fetch_message(message.id)
+
+    winner_index = 0
+    winner_votes = 0
+    for i, reaction in enumerate(message.reactions):
+        if str(reaction.emoji) in number_emojis:
+            count = reaction.count - 1
+            if count > winner_votes:
+                winner_votes = count
+                winner_index = number_emojis.index(str(reaction.emoji))
+
+    winner = players[winner_index]
+    await interaction.channel.send(f'🏆 **{winner}** has won the vote for the MVP of the scrim! 🏆')
 
 @bot.event
 async def on_ready():
