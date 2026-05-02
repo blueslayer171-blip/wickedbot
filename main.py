@@ -85,7 +85,7 @@ async def availability(interaction: discord.Interaction):
         await msg.add_reaction('7️⃣')
         await msg.add_reaction('9️⃣')
 
-@tree.command(name='match-reminder', description='Send a scrim reminder')
+@tree.command(name='scrim-reminder', description='Send a scrim reminder')
 @app_commands.describe(time='Time of the scrim')
 async def match_reminder(interaction: discord.Interaction, time: str):
     embed = discord.Embed(
