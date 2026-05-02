@@ -152,6 +152,86 @@ def get_winner(score: str, opposing_team: str) -> str:
     except:
         return ''
 
+RECORD_CHANNEL_ID = 1500123119812087931
+
+MAPS = ['Factory', 'Skyscraper', 'Hideout', 'Ship', 'Arctic', 'Dam', 'Mall']
+
+async def update_record(client, scrim_won: bool, map_results: list):
+    channel = client.get_channel(RECORD_CHANNEL_ID)
+    if not channel:
+        return
+
+    # Find existing record message
+    record_message = None
+    async for message in channel.history(limit=50):
+        if message.author == client.user and 'WICKED RECORD' in message.content:
+            record_message = message
+            break
+
+    # Parse existing record or start fresh
+    if record_message:
+        lines = record_message.content.split('\n')
+        # Parse overall record
+        overall_line = lines[1]
+        parts = overall_line.replace('**Overall:** ', '').split(' - ')
+        overall_wins = int(parts[0].replace('W', ''))
+        overall_losses = int(parts[1].replace('L', ''))
+
+        # Parse map records
+        map_records = {}
+        for line in lines[4:]:
+            if ':' in line:
+                map_name = line.split(':')[0].strip().replace('🗺️ ', '')
+                stats = line.split(':')[1].strip()
+                w = int(stats.split('/')[0].strip().replace('W', ''))
+                l = int(stats.split('/')[1].strip().split('(')[0].strip().replace('L', ''))
+                map_records[map_name] = [w, l]
+    else:
+        overall_wins = 0
+        overall_losses = 0
+        map_records = {m: [0, 0] for m in MAPS}
+
+    # Update overall record
+    if scrim_won:
+        overall_wins += 1
+    else:
+        overall_losses += 1
+
+    # Update map records
+    for map_name, won in map_results:
+        matched = next((m for m in MAPS if m.lower() == map_name.lower()), None)
+        if matched:
+            if matched not in map_records:
+                map_records[matched] = [0, 0]
+            if won:
+                map_records[matched][0] += 1
+            else:
+                map_records[matched][1] += 1
+
+    # Make sure all maps exist
+    for m in MAPS:
+        if m not in map_records:
+            map_records[m] = [0, 0]
+
+    # Build message
+    content = '**🏆 WICKED RECORD**\n'
+    content += f'**Overall:** {overall_wins}W - {overall_losses}L\n'
+    total = overall_wins + overall_losses
+    overall_wr = round((overall_wins / total) * 100) if total > 0 else 0
+    content += f'**Win Rate:** {overall_wr}%\n\n'
+    content += '**Map Records:**\n'
+
+    for map_name in MAPS:
+        w, l = map_records.get(map_name, [0, 0])
+        total_maps = w + l
+        wr = round((w / total_maps) * 100) if total_maps > 0 else 0
+        content += f'🗺️ {map_name}: {w}W / {l}L ({wr}% Win Rate)\n'
+
+    if record_message:
+        await record_message.edit(content=content)
+    else:
+        await channel.send(content)
+
 @tree.command(name='scrim-result', description='Post scrim results')
 @app_commands.describe(
     opposing_team='The opposing team name',
@@ -195,6 +275,24 @@ async def scrim_result(
     embed.add_field(name='Notes', value=notes, inline=False)
 
     await interaction.response.send_message(embed=embed)
+
+    # Calculate map results
+    map_results = []
+    wicked_map_wins = 0
+    opponent_map_wins = 0
+
+    for map_name, score in [(map1, map1_score), (map2, map2_score), (map3, map3_score)]:
+        if map_name and score:
+            winner = get_winner(score, opposing_team)
+            won = winner == 'WICKED Win'
+            map_results.append((map_name, won))
+            if won:
+                wicked_map_wins += 1
+            else:
+                opponent_map_wins += 1
+
+    scrim_won = wicked_map_wins > opponent_map_wins
+    await update_record(interaction.client, scrim_won, map_results)
 
 @tree.command(name='ping-available', description='Ping available players for a day')
 @app_commands.describe(day='Day of the week')
