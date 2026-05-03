@@ -184,7 +184,7 @@ async def match_reminder(interaction: discord.Interaction, team: str, time: str,
     )
 
     await interaction.response.send_message(
-        content='<@&1475257569231769699>',
+        content='<@&1475257569244221501>',
         embed=embed,
         allowed_mentions=discord.AllowedMentions(roles=True)
     )
