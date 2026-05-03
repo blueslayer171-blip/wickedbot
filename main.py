@@ -770,6 +770,11 @@ async def weeklies(
 
     await interaction.response.send_message(embed=embed)
 
+@tree.command(name='fist', description='Threaten someone with fists')
+@app_commands.describe(user='The user to threaten')
+async def fist(interaction: discord.Interaction, user: discord.Member):
+    await interaction.response.send_message(f'{user.mention} will kill you with his fists')
+
 @bot.event
 async def on_ready():
     guild = discord.Object(id=1475257569231769690)
