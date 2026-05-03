@@ -184,7 +184,7 @@ async def match_reminder(interaction: discord.Interaction, team: str, time: str,
     )
 
     await interaction.response.send_message(
-        content='<@&1475257569244221501>',
+        content='<@&1475257569231769699>',
         embed=embed,
         allowed_mentions=discord.AllowedMentions(roles=True)
     )
@@ -245,10 +245,15 @@ class TryoutView(discord.ui.View):
 
     async def update_embed(self, interaction: discord.Interaction):
         embed = interaction.message.embeds[0]
+        date_value = embed.fields[0].value
+        time_value = embed.fields[1].value
         accepted_str = '\n'.join(self.accepted) if self.accepted else 'None'
         declined_str = '\n'.join(self.declined) if self.declined else 'None'
 
         embed.clear_fields()
+        embed.add_field(name='📅 Date', value=date_value, inline=True)
+        embed.add_field(name='🕙 Time', value=time_value, inline=True)
+        embed.add_field(name='\u200B', value='\u200B', inline=True)
         embed.add_field(name='✅ Accepted', value=accepted_str, inline=False)
         embed.add_field(name='❌ Declined', value=declined_str, inline=False)
 
