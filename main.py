@@ -15,7 +15,7 @@ bot = discord.Client(intents=intents)
 tree = app_commands.CommandTree(bot)
 
 
-@tree.command(name='scrim', description='Create a scrim embed')
+@tree.command(name='scrim-roster', description='Create a scrim embed')
 @app_commands.describe(
     team='The other team name',
     time='Time of the scrim',
@@ -102,7 +102,7 @@ async def match_reminder(interaction: discord.Interaction, time: str):
         allowed_mentions=discord.AllowedMentions(roles=True)
     )
 
-@tree.command(name='roster', description='Display the team roster')
+@tree.command(name='team-roster', description='Display the team roster')
 @app_commands.describe(
     main1='Main player 1',
     main2='Main player 2',
