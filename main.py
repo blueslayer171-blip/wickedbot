@@ -4,6 +4,8 @@ import os
 from dotenv import load_dotenv
 import webserver
 import asyncio
+from datetime import datetime
+import pytz
 
 load_dotenv()
 TOKEN = os.environ['DISCORD_BOT_TOKEN']
@@ -141,12 +143,89 @@ async def availability(interaction: discord.Interaction):
         await msg.add_reaction('7️⃣')
         await msg.add_reaction('9️⃣')
 
+@tree.command(name='match-reminder', description='Send a match reminder')
+@app_commands.describe(
+    team='The opposing team name',
+    time='Time of the match (e.g. 8:00 PM)',
+    timezone='Your timezone'
+)
+@app_commands.choices(timezone=[
+    app_commands.Choice(name='EST', value='US/Eastern'),
+    app_commands.Choice(name='CST', value='US/Central'),
+    app_commands.Choice(name='PST', value='US/Pacific'),
+])
+async def match_reminder(interaction: discord.Interaction, team: str, time: str, timezone: app_commands.Choice[str]):
+    tz = pytz.timezone(timezone.value)
+    now = datetime.now(tz)
+
+    try:
+        match_time = datetime.strptime(time, '%I:%M %p').replace(
+            year=now.year, month=now.month, day=now.day, tzinfo=tz
+        )
+        diff = match_time - now
+        minutes = int(diff.total_seconds() / 60)
+
+        if minutes < 0:
+            countdown = 'Match has already started!'
+        elif minutes < 60:
+            countdown = f'Starts in {minutes} minutes'
+        else:
+            hours = minutes // 60
+            mins = minutes % 60
+            countdown = f'Starts in {hours} hour{"s" if hours > 1 else ""} {mins} minutes' if mins > 0 else f'Starts in {hours} hour{"s" if hours > 1 else ""}'
+    except:
+        countdown = 'Invalid time format'
+
+    embed = discord.Embed(
+        title='MATCH REMINDER',
+        description=f'Match vs **{team}** at **{time}**\n{countdown}',
+        color=0xFF0000,
+        timestamp=discord.utils.utcnow()
+    )
+
+    await interaction.response.send_message(
+        content='<@&1475257569231769699>',
+        embed=embed,
+        allowed_mentions=discord.AllowedMentions(roles=True)
+    )
+
+
 @tree.command(name='scrim-reminder', description='Send a scrim reminder')
-@app_commands.describe(time='Time of the scrim')
-async def match_reminder(interaction: discord.Interaction, time: str):
+@app_commands.describe(
+    team='The opposing team name',
+    time='Time of the scrim (e.g. 8:00 PM)',
+    timezone='Your timezone'
+)
+@app_commands.choices(timezone=[
+    app_commands.Choice(name='EST', value='US/Eastern'),
+    app_commands.Choice(name='CST', value='US/Central'),
+    app_commands.Choice(name='PST', value='US/Pacific'),
+])
+async def scrim_reminder(interaction: discord.Interaction, team: str, time: str, timezone: app_commands.Choice[str]):
+    tz = pytz.timezone(timezone.value)
+    now = datetime.now(tz)
+
+    try:
+        scrim_time = datetime.strptime(time, '%I:%M %p').replace(
+            year=now.year, month=now.month, day=now.day, tzinfo=tz
+        )
+        diff = scrim_time - now
+        minutes = int(diff.total_seconds() / 60)
+
+        if minutes < 0:
+            countdown = 'Scrim has already started!'
+        elif minutes < 60:
+            countdown = f'Starts in {minutes} minutes'
+        else:
+            hours = minutes // 60
+            mins = minutes % 60
+            countdown = f'Starts in {hours} hour{"s" if hours > 1 else ""} {mins} minutes' if mins > 0 else f'Starts in {hours} hour{"s" if hours > 1 else ""}'
+    except:
+        countdown = 'Invalid time format'
+
     embed = discord.Embed(
         title='SCRIM REMINDER',
-        description=f'Scrim at {time}',
+        description=f'Scrim vs **{team}** at **{time}**\n{countdown}',
         color=0x9800FF,
         timestamp=discord.utils.utcnow()
     )
@@ -157,43 +236,71 @@ async def match_reminder(interaction: discord.Interaction, time: str):
         allowed_mentions=discord.AllowedMentions(roles=True)
     )
 
-@tree.command(name='team-roster', description='Display the team roster')
+
+class TryoutView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.accepted = []
+        self.declined = []
+
+    async def update_embed(self, interaction: discord.Interaction):
+        embed = interaction.message.embeds[0]
+        accepted_str = '\n'.join(self.accepted) if self.accepted else 'None'
+        declined_str = '\n'.join(self.declined) if self.declined else 'None'
+
+        embed.clear_fields()
+        embed.add_field(name='✅ Accepted', value=accepted_str, inline=False)
+        embed.add_field(name='❌ Declined', value=declined_str, inline=False)
+
+        await interaction.message.edit(embed=embed, view=self)
+
+    @discord.ui.button(label='✅ Accept', style=discord.ButtonStyle.green)
+    async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
+        name = interaction.user.display_name
+        if name in self.declined:
+            self.declined.remove(name)
+        if name not in self.accepted:
+            self.accepted.append(name)
+        await interaction.response.defer()
+        await self.update_embed(interaction)
+
+    @discord.ui.button(label='❌ Decline', style=discord.ButtonStyle.red)
+    async def decline(self, interaction: discord.Interaction, button: discord.ui.Button):
+        name = interaction.user.display_name
+        if name in self.accepted:
+            self.accepted.remove(name)
+        if name not in self.declined:
+            self.declined.append(name)
+        await interaction.response.defer()
+        await self.update_embed(interaction)
+
+
+@tree.command(name='tryout', description='Post a tryout embed')
 @app_commands.describe(
-    main1='Main player 1',
-    main2='Main player 2',
-    main3='Main player 3',
-    main4='Main player 4',
-    main5='Main player 5',
-    subs='Substitute players'
+    date='Date of the tryout',
+    time='Time of the tryout (e.g. 8:00 PM)',
 )
-async def roster(
-    interaction: discord.Interaction,
-    main1: str = 'N/A',
-    main2: str = 'N/A',
-    main3: str = 'N/A',
-    main4: str = 'N/A',
-    main5: str = 'N/A',
-    subs: str = 'N/A'
-):
+async def tryout(interaction: discord.Interaction, date: str, time: str):
     embed = discord.Embed(
-        title='WICKED ROSTER',
+        title='WICKED TRYOUT',
         color=0x9800FF,
         timestamp=discord.utils.utcnow()
     )
 
-    embed.add_field(
-        name='Main Roster',
-        value=f'{main1}\n{main2}\n{main3}\n{main4}\n{main5}',
-        inline=False
-    )
+    embed.add_field(name='📅 Date', value=date, inline=True)
+    embed.add_field(name='🕙 Time', value=time, inline=True)
+    embed.add_field(name='\u200B', value='\u200B', inline=True)
+    embed.add_field(name='✅ Accepted', value='None', inline=False)
+    embed.add_field(name='❌ Declined', value='None', inline=False)
 
-    embed.add_field(
-        name='Subs',
-        value=subs,
-        inline=False
-    )
+    view = TryoutView()
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(
+        content='<@&1475290401274593412>',
+        embed=embed,
+        view=view,
+        allowed_mentions=discord.AllowedMentions(roles=True)
+    )
 
 def get_winner(score: str, opposing_team: str) -> str:
     try:
