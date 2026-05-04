@@ -587,7 +587,7 @@ async def mvp_vote(interaction: discord.Interaction):
     message_id = message.id
 
     async def announce_winner():
-        await asyncio.sleep(1800)
+        await asyncio.sleep(600)
         msg = await channel.fetch_message(message_id)
 
         winner_index = 0
