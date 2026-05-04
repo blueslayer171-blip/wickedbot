@@ -579,14 +579,17 @@ async def mvp_vote(interaction: discord.Interaction):
     players = [
         'Dopiest',
         'Blue Slayer',
+        'passive',
         'Fluthagr8',
-        'trick.nwm',
+        'Flighty',
+        'trick.nvm',
         'gamma2-',
         'Deftones',
-        'IceBeast'
+        'TADASHI',
+        'Cutskills'
     ]
 
-    number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣']
+    number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
 
     description = 'Vote for the MVP of the scrim!\n\n'
     for i, player in enumerate(players):
