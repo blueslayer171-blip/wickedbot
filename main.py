@@ -583,21 +583,26 @@ async def mvp_vote(interaction: discord.Interaction):
     for i in range(len(players)):
         await message.add_reaction(number_emojis[i])
 
-    await asyncio.sleep(1800)
+    channel = interaction.channel
+    message_id = message.id
 
-    message = await interaction.channel.fetch_message(message.id)
+    async def announce_winner():
+        await asyncio.sleep(1800)
+        msg = await channel.fetch_message(message_id)
 
-    winner_index = 0
-    winner_votes = 0
-    for i, reaction in enumerate(message.reactions):
-        if str(reaction.emoji) in number_emojis:
-            count = reaction.count - 1
-            if count > winner_votes:
-                winner_votes = count
-                winner_index = number_emojis.index(str(reaction.emoji))
+        winner_index = 0
+        winner_votes = 0
+        for reaction in msg.reactions:
+            if str(reaction.emoji) in number_emojis:
+                count = reaction.count - 1
+                if count > winner_votes:
+                    winner_votes = count
+                    winner_index = number_emojis.index(str(reaction.emoji))
 
-    winner = players[winner_index]
-    await interaction.channel.send(f'🏆 **{winner}** has won the vote for the MVP of the scrim! 🏆')
+        winner = players[winner_index]
+        await channel.send(f'🏆 **{winner}** has won the vote for the MVP of the scrim! 🏆')
+
+    asyncio.create_task(announce_winner())
 
 @tree.command(name='clear-record', description='Clear the entire record')
 @is_manager()
