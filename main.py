@@ -143,53 +143,6 @@ async def availability(interaction: discord.Interaction):
         await msg.add_reaction('7️⃣')
         await msg.add_reaction('9️⃣')
 
-@tree.command(name='match-reminder', description='Send a match reminder')
-@app_commands.describe(
-    team='The opposing team name',
-    time='Time of the match (e.g. 8:00 PM)',
-    timezone='Your timezone'
-)
-@app_commands.choices(timezone=[
-    app_commands.Choice(name='EST', value='US/Eastern'),
-    app_commands.Choice(name='CST', value='US/Central'),
-    app_commands.Choice(name='PST', value='US/Pacific'),
-])
-async def match_reminder(interaction: discord.Interaction, team: str, time: str, timezone: app_commands.Choice[str]):
-    tz = pytz.timezone(timezone.value)
-    now = datetime.now(tz)
-
-    try:
-        match_time = datetime.strptime(time, '%I:%M %p').replace(
-            year=now.year, month=now.month, day=now.day, tzinfo=tz
-        )
-        diff = match_time - now
-        minutes = int(diff.total_seconds() / 60)
-
-        if minutes < 0:
-            countdown = 'Match has already started!'
-        elif minutes < 60:
-            countdown = f'Starts in {minutes} minutes'
-        else:
-            hours = minutes // 60
-            mins = minutes % 60
-            countdown = f'Starts in {hours} hour{"s" if hours > 1 else ""} {mins} minutes' if mins > 0 else f'Starts in {hours} hour{"s" if hours > 1 else ""}'
-    except:
-        countdown = 'Invalid time format'
-
-    embed = discord.Embed(
-        title='MATCH REMINDER',
-        description=f'Match vs **{team}** at **{time}**\n{countdown}',
-        color=0xFF0000,
-        timestamp=discord.utils.utcnow()
-    )
-
-    await interaction.response.send_message(
-        content='<@&1475257569231769699>',
-        embed=embed,
-        allowed_mentions=discord.AllowedMentions(roles=True)
-    )
-
-
 @tree.command(name='scrim-reminder', description='Send a scrim reminder')
 @app_commands.describe(
     team='The opposing team name',
@@ -206,26 +159,18 @@ async def scrim_reminder(interaction: discord.Interaction, team: str, time: str,
     now = datetime.now(tz)
 
     try:
-        scrim_time = datetime.strptime(time, '%I:%M %p').replace(
-            year=now.year, month=now.month, day=now.day, tzinfo=tz
-        )
-        diff = scrim_time - now
-        minutes = int(diff.total_seconds() / 60)
-
-        if minutes < 0:
-            countdown = 'Scrim has already started!'
-        elif minutes < 60:
-            countdown = f'Starts in {minutes} minutes'
-        else:
-            hours = minutes // 60
-            mins = minutes % 60
-            countdown = f'Starts in {hours} hour{"s" if hours > 1 else ""} {mins} minutes' if mins > 0 else f'Starts in {hours} hour{"s" if hours > 1 else ""}'
+        scrim_time = datetime.strptime(time, '%I:%M %p')
+        scrim_time = tz.localize(scrim_time.replace(year=now.year, month=now.month, day=now.day))
+        timestamp = int(scrim_time.timestamp())
+        time_str = f'<t:{timestamp}:t>'
+        countdown_str = f'<t:{timestamp}:R>'
     except:
-        countdown = 'Invalid time format'
+        await interaction.response.send_message('Invalid time format. Use something like 8:00 PM', ephemeral=True)
+        return
 
     embed = discord.Embed(
         title='SCRIM REMINDER',
-        description=f'Scrim vs **{team}** at **{time}**\n{countdown}',
+        description=f'Scrim vs **{team}**\nTime: {time_str}\n{countdown_str}',
         color=0x9800FF,
         timestamp=discord.utils.utcnow()
     )
@@ -237,6 +182,43 @@ async def scrim_reminder(interaction: discord.Interaction, team: str, time: str,
     )
 
 
+@tree.command(name='match-reminder', description='Send a match reminder')
+@app_commands.describe(
+    team='The opposing team name',
+    time='Time of the match (e.g. 8:00 PM)',
+    timezone='Your timezone'
+)
+@app_commands.choices(timezone=[
+    app_commands.Choice(name='EST', value='US/Eastern'),
+    app_commands.Choice(name='CST', value='US/Central'),
+    app_commands.Choice(name='PST', value='US/Pacific'),
+])
+async def match_reminder(interaction: discord.Interaction, team: str, time: str, timezone: app_commands.Choice[str]):
+    tz = pytz.timezone(timezone.value)
+    now = datetime.now(tz)
+
+    try:
+        match_time = datetime.strptime(time, '%I:%M %p')
+        match_time = tz.localize(match_time.replace(year=now.year, month=now.month, day=now.day))
+        timestamp = int(match_time.timestamp())
+        time_str = f'<t:{timestamp}:t>'
+        countdown_str = f'<t:{timestamp}:R>'
+    except:
+        await interaction.response.send_message('Invalid time format. Use something like 8:00 PM', ephemeral=True)
+        return
+
+    embed = discord.Embed(
+        title='MATCH REMINDER',
+        description=f'Match vs **{team}**\nTime: {time_str}\n{countdown_str}',
+        color=0xFF0000,
+        timestamp=discord.utils.utcnow()
+    )
+
+    await interaction.response.send_message(
+        content='<@&1475257569231769699>',
+        embed=embed,
+        allowed_mentions=discord.AllowedMentions(roles=True)
+    )
 class TryoutView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
