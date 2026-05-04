@@ -319,43 +319,37 @@ async def update_record(client, scrim_won: bool, map_results: list):
     if not channel:
         return
 
-    # Find existing record message
     record_message = None
     async for message in channel.history(limit=50):
         if message.author == client.user and 'WICKED RECORD' in message.content:
             record_message = message
             break
 
-    # Parse existing record or start fresh
     if record_message:
         lines = record_message.content.split('\n')
-        # Parse overall record
         overall_line = lines[1]
         parts = overall_line.replace('**Overall:** ', '').split(' - ')
-        overall_wins = int(parts[0].replace('W', ''))
-        overall_losses = int(parts[1].replace('L', ''))
+        overall_wins = int(parts[0].replace('W', '').strip())
+        overall_losses = int(parts[1].replace('L', '').strip())
 
-        # Parse map records
         map_records = {}
         for line in lines[4:]:
-            if ':' in line:
+            if '🗺️' in line and ':' in line:
                 map_name = line.split(':')[0].strip().replace('🗺️ ', '')
                 stats = line.split(':')[1].strip()
-                w = int(stats.split('/')[0].strip().replace('W', ''))
-                l = int(stats.split('/')[1].strip().split('(')[0].strip().replace('L', ''))
+                w = int(stats.split('/')[0].strip().replace('W', '').strip())
+                l = int(stats.split('/')[1].strip().split('(')[0].strip().replace('L', '').strip())
                 map_records[map_name] = [w, l]
     else:
         overall_wins = 0
         overall_losses = 0
         map_records = {m: [0, 0] for m in MAPS}
 
-    # Update overall record
     if scrim_won:
         overall_wins += 1
     else:
         overall_losses += 1
 
-    # Update map records
     for map_name, won in map_results:
         matched = next((m for m in MAPS if m.lower() == map_name.lower()), None)
         if matched:
@@ -366,16 +360,15 @@ async def update_record(client, scrim_won: bool, map_results: list):
             else:
                 map_records[matched][1] += 1
 
-    # Make sure all maps exist
     for m in MAPS:
         if m not in map_records:
             map_records[m] = [0, 0]
 
-    # Build message
-    content = '**🏆 WICKED RECORD**\n'
-    content += f'**Overall:** {overall_wins}W - {overall_losses}L\n'
     total = overall_wins + overall_losses
     overall_wr = round((overall_wins / total) * 100) if total > 0 else 0
+
+    content = '**🏆 WICKED RECORD**\n'
+    content += f'**Overall:** {overall_wins}W - {overall_losses}L\n'
     content += f'**Win Rate:** {overall_wr}%\n\n'
     content += '**Map Records:**\n'
 
