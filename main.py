@@ -758,6 +758,27 @@ async def weeklies(
 async def fist(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.send_message(f'{user.mention} will kill you with his fists')
 
+@tree.command(name='information', description='Post host and password information')
+@app_commands.describe(
+    host='Host name',
+    password='Lobby password'
+)
+async def information(interaction: discord.Interaction, host: str, password: str):
+    embed = discord.Embed(
+        title='LOBBY INFORMATION',
+        color=0x9800FF,
+        timestamp=discord.utils.utcnow()
+    )
+
+    embed.add_field(name='👑 Host', value=host, inline=True)
+    embed.add_field(name='🔒 Password', value=password, inline=True)
+
+    await interaction.response.send_message(
+        content='<@&1475257569231769699>',
+        embed=embed,
+        allowed_mentions=discord.AllowedMentions(roles=True)
+    )
+
 @bot.event
 async def on_ready():
     guild = discord.Object(id=1475257569231769690)
