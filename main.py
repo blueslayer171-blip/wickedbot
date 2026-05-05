@@ -139,10 +139,12 @@ async def availability(interaction: discord.Interaction):
     )
 
     for day in days:
-        msg = await interaction.channel.send(f'{day}\nReact with 🎮 to vote for a game night on this day!')
+        msg = await interaction.channel.send(day)
         await msg.add_reaction('7️⃣')
         await msg.add_reaction('9️⃣')
-        await msg.add_reaction('🎮')
+
+    gamenight_msg = await interaction.channel.send('React with 🎮 to vote for a game night this week!')
+    await gamenight_msg.add_reaction('🎮')
 
 @tree.command(name='scrim-reminder', description='Send a scrim reminder')
 @app_commands.describe(
