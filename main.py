@@ -779,6 +779,65 @@ async def information(interaction: discord.Interaction, host: str, password: str
         allowed_mentions=discord.AllowedMentions(roles=True)
     )
 
+@tree.command(name='gamenight', description='Start a game night vote')
+async def gamenight(interaction: discord.Interaction):
+    games = [
+        'Breachers',
+        'Gorilla Tag',
+        'VRChat',
+        'Free VR Game',
+        'Among Us',
+        'Free Steam Game',
+        'Karaoke',
+        'Movie Night',
+        'Hangout and Chill',
+        'Other'
+    ]
+
+    number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
+
+    description = 'Vote for game night!\n\n'
+    for i, game in enumerate(games):
+        description += f'{number_emojis[i]} - {game}\n'
+
+    embed = discord.Embed(
+        title='🎮 GAME NIGHT VOTE',
+        description=description,
+        color=0x9800FF,
+        timestamp=discord.utils.utcnow()
+    )
+
+    await interaction.response.send_message(
+        content='<@&1475257569231769699>',
+        embed=embed,
+        allowed_mentions=discord.AllowedMentions(roles=True)
+    )
+    message = await interaction.original_response()
+
+    for i in range(len(games)):
+        await message.add_reaction(number_emojis[i])
+
+    channel = interaction.channel
+    message_id = message.id
+
+    async def announce_winner():
+        await asyncio.sleep(600)
+        msg = await channel.fetch_message(message_id)
+
+        winner_index = 0
+        winner_votes = 0
+        for reaction in msg.reactions:
+            if str(reaction.emoji) in number_emojis:
+                count = reaction.count - 1
+                if count > winner_votes:
+                    winner_votes = count
+                    winner_index = number_emojis.index(str(reaction.emoji))
+
+        winner = games[winner_index]
+        await channel.send(f'🎮 **{winner}** has won the game night vote! Get ready to play!')
+
+    asyncio.create_task(announce_winner())
+
 @bot.event
 async def on_ready():
     guild = discord.Object(id=1475257569231769690)
