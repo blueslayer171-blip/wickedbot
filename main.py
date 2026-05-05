@@ -134,7 +134,7 @@ async def availability(interaction: discord.Interaction):
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
     await interaction.response.send_message(
-        content='<@&1475257569231769699>',
+        content='<@&147525769231769699>',
         allowed_mentions=discord.AllowedMentions(roles=True)
     )
 
@@ -142,6 +142,7 @@ async def availability(interaction: discord.Interaction):
         msg = await interaction.channel.send(day)
         await msg.add_reaction('7️⃣')
         await msg.add_reaction('9️⃣')
+        await msg.add_reaction('🎮')
 
     gamenight_msg = await interaction.channel.send('React with 🎮 to vote for a game night this week!')
     await gamenight_msg.add_reaction('🎮')
