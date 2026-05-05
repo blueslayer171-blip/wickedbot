@@ -134,7 +134,7 @@ async def availability(interaction: discord.Interaction):
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
     await interaction.response.send_message(
-        content='<@&147525769231769699>',
+        content='<@&1475257569231769699>',
         allowed_mentions=discord.AllowedMentions(roles=True)
     )
 
